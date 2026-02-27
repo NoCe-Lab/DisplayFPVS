@@ -1,30 +1,84 @@
-# DisplayFPVS
-Python (PsychoPy) Code for displaying custom visual stimuli for Fast Periodic Visual Stimulation (FPVS, a.k.a Steady-State Visual Evoked Potentials, SSVEP).  Designed to be used in the context of electroencephalography (EEG) experiments.
+# Semantic FPVS EEG Task
 
-To run for your own experiment:
+Adapted from [DisplayFPVS](https://github.com/JosephArizpe/DisplayFPVS) (Joseph M. Arizpe, 2017) for a **Semantic FPVS** EEG paradigm with 4 conditions.
 
-1) Make sure Python and psychoPy are installed
-2) Make appropriate stimuli (images) to be displayed
-3) Set the psychoPy preferences and monitor settings to reflect your particular experimental setup.
-4) Place SSVEP.py into the desired experiment directory
-5) In the same directory, place a folder called "stimuli"
+## Overview
 
-6) If the experiment is a base category vs. oddball category type of paradigm:
-a) Inside the "stimuli" folder put two more folders, one for each stimulus category (e.g. "objects","faces").  Put all the respective stimulus image files in those sub-folders.
-b) In the SSVEP.py code go to the __init__ function and set the self.StimDir variable to the names of the two stimulus category folders (e.g. ["objects","faces"]) with the second listed category being the intended oddball category.  Also uncomment the indicated line in the code for the relevant stimulus list generation for this type of paradigm.
+Images are presented at 6 Hz (one every ~167 ms) in cycles of 4 standard + 1 oddball (oddball rate = 1.2 Hz). Four conditions vary the semantic distance between standard and oddball categories:
 
-6) If the experiment is an exemplar oddball type of paradigm:
-a) Put all the stimulus image files within the "stimuli" folder.
-b)  In the SSVEP.py code, go to the __init__ function and uncomment the indicated line in the code for the relevant stimulus list generation for this type of paradigm.
+| Condition | Standard | Oddball |
+|-----------|----------|---------|
+| easy | category A | category B (far) |
+| hard | category A | category B (close) |
+| scramble_easy | scrambled A | scrambled B (far) |
+| scramble_hard | scrambled A | scrambled B (close) |
 
-7) Set the ACTUAL_SCREEN_RESOLUTION variable to the resolution of your monitor.  Customize any other things in the code to your needs (e.g., stimulus size, background colors, random stimulus sizes, Fade in, etc).
-8) Set your monitor's screen refresh rate to the desired frequency.
-9) Open SSVEP.py in the psychoPy coder viewer and run it.
+Each condition has `NUM_BLOCKS_PER_CONDITION` blocks of `BLOCK_DURATION_S` seconds. Condition order is pseudo-randomised per subject.
 
+Features: sinusoidal opacity modulation, fade in/out, random size jitter, fixation colour-change task, EEG parallel port triggers (condition-specific oddball codes), photodiode flash (top-right) on oddball onset.
 
-Additional Notes:
-If your stimulus image x/y proportions do not match those in the SSVEP.py stimSize parameter, you must change that parameter or else your stimuli will be displayed stretched.
+## Directory Structure
 
-The stimulation frequency you choose from the dropdown menu will not necessarily be exact because the actual possible stimulation frequency depends on the screen refresh rate.  The code automatically finds a stimulation rate close to the target frequency based upon the screen refresh rate that it detects.  If your monitor refresh rate is not stable, the calculated stimulation frequency will not be correct and the experiment may additionally fail near the end because it miscalculated the number of stimuli needed for the whole run.
+```
+FPVS/
+├── config.py              # All configurable parameters
+├── generate_lists.py      # Per-subject stimulus list generator
+├── fpvs_task.py           # Main presentation script
+├── SSVEP.py               # Original reference (Python 2, untouched)
+├── stimuli/
+│   ├── easy/standard/     # Standard images for easy condition
+│   ├── easy/odd/          # Oddball images for easy condition
+│   ├── hard/standard/
+│   ├── hard/odd/
+│   ├── scramble_easy/standard/
+│   ├── scramble_easy/odd/
+│   ├── scramble_hard/standard/
+│   └── scramble_hard/odd/
+└── output/                # Per-subject output (gitignored)
+    └── <subject_id>/
+```
 
-Anyone may use and customize this code for their own purposes, but I would appreciate a mention in the acknowledgements section of any resulting publication.  Hope you enjoy!
+## Setup
+
+1. Install Python 3 and PsychoPy (`pip install psychopy`).
+2. Place stimulus images in the appropriate `stimuli/<condition>/<standard|odd>/` folders.
+3. Configure experiment parameters in `config.py` (screen resolution, parallel port address, etc.).
+
+## Running
+
+```bash
+# 1. Generate stimulus lists for a subject
+python generate_lists.py --subject SUB01
+
+# 2. Run the experiment
+python fpvs_task.py
+```
+
+The participant dialog will ask for Subject ID and Session number. Lists must be generated before running the task.
+
+## Output
+
+All output is saved to `output/<subject_id>/`:
+
+- `<subject>_sess<N>_onsets.csv` — per-image onset log (condition, filename, type, trigger code, onset time, frame number)
+- `<subject>_sess<N>_fixation.csv` — fixation task performance (change times, detection, RTs)
+- `<subject>_sess<N>_runInfo.txt` — experimental parameters and metadata
+- `<condition>_list.csv` — stimulus lists (generated by `generate_lists.py`)
+
+## Trigger Scheme
+
+| Event | Code |
+|-------|------|
+| Block start | 100 |
+| Block end | 101 |
+| Standard onset | 10 |
+| Oddball easy | 21 |
+| Oddball hard | 22 |
+| Oddball scramble_easy | 23 |
+| Oddball scramble_hard | 24 |
+| Fixation change | 50 |
+| Response | 60 |
+
+## Credits
+
+Original SSVEP.py by Joseph M. Arizpe (Harvard Medical School, 2017). Semantic FPVS adaptation for Valentina's lab at UNIGE.

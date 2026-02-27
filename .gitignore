@@ -1,0 +1,6 @@
+output/
+Stimuli_list_*.txt
+runData_*.txt
+runInfo_*.txt
+__pycache__/
+*.pyc

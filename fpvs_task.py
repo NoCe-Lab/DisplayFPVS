@@ -17,7 +17,7 @@ Added / changed:
   - EEG parallel port triggers (condition-specific oddball codes)
   - Photodiode flash on oddball onset (top-right corner)
   - Image preloading to prevent frame drops
-  - No image repetition within a block
+  - Wrap-around with reshuffle when image pool exhausted (no consecutive repeats)
   - Per-image onset logging to CSV
   - Stimulus order saved to output
   - No fixation cross, no fixation task
@@ -145,7 +145,12 @@ def scan_images(directory: str) -> list[str]:
 
 
 def generate_stim_list(condition: str, stim_freq: float) -> list[dict]:
-    """Generate a random stimulus sequence for one block (no repetitions).
+    """Generate a random stimulus sequence for one block with wrap-around.
+
+    Images are reused cyclically (reshuffled each pass) following the
+    original SSVEP.py approach.  To avoid an oddball-familiarity confound,
+    the standard pool is sub-sampled so that the average number of
+    presentations per image is matched across standard and oddball pools.
 
     Returns list of dicts with keys: position, filename, type, full_path
     """
@@ -165,29 +170,41 @@ def generate_stim_list(condition: str, stim_freq: float) -> list[dict]:
     n_standard_needed = nb_patterns * STIM_PATTERN[0]
     n_odd_needed = nb_patterns * STIM_PATTERN[1]
 
-    if n_standard_needed > len(std_files):
-        sys.exit(
-            f"ERROR: need {n_standard_needed} standard images but only "
-            f"{len(std_files)} found in {std_dir}"
-        )
-    if n_odd_needed > len(odd_files):
-        sys.exit(
-            f"ERROR: need {n_odd_needed} oddball images but only "
-            f"{len(odd_files)} found in {odd_dir}"
-        )
+    # ── Match repetition rates across pools ──────────────────────
+    # Target: each standard image seen ~ same number of times as each oddball.
+    # reps_per_odd = n_odd_needed / len(odd_files)
+    # desired std pool size = n_standard_needed / reps_per_odd
+    #                       = n_standard_needed * len(odd_files) / n_odd_needed
+    n_std_available = len(std_files)
+    n_odd_available = len(odd_files)
 
-    # Shuffle and take exactly what we need (no repetition)
+    desired_std_pool = int(round(
+        n_standard_needed * n_odd_available / n_odd_needed
+    ))
+    # Clamp: use at least as many as oddball pool, at most all available
+    std_pool_size = max(n_odd_available, min(n_std_available, desired_std_pool))
+
     random.shuffle(std_files)
-    random.shuffle(odd_files)
-    std_pool = std_files[:n_standard_needed]
-    odd_pool = odd_files[:n_odd_needed]
+    std_pool = std_files[:std_pool_size]
 
-    # Build the sequence: [4 standard, 1 oddball] x nb_patterns
+    random.shuffle(odd_files)
+    odd_pool = list(odd_files)  # use all oddball images
+
+    reps_std = n_standard_needed / std_pool_size
+    reps_odd = n_odd_needed / n_odd_available
+    print(f"  Standard pool: {std_pool_size}/{n_std_available} images, "
+          f"~{reps_std:.1f} presentations each")
+    print(f"  Oddball pool:  {n_odd_available} images, "
+          f"~{reps_odd:.1f} presentations each")
+
+    # ── Build sequence with wrap-around (SSVEP.py L159-171) ──────
     stim_list = []
     std_idx = 0
     odd_idx = 0
     seq = 0
+
     for _ in range(nb_patterns):
+        # Standard images
         for _ in range(STIM_PATTERN[0]):
             fname = std_pool[std_idx]
             stim_list.append({
@@ -198,7 +215,16 @@ def generate_stim_list(condition: str, stim_freq: float) -> list[dict]:
                 "full_path": os.path.join(std_dir, fname),
             })
             std_idx += 1
+            if std_idx >= len(std_pool):
+                std_idx = 0
+                last = std_pool[-1]
+                random.shuffle(std_pool)
+                # Avoid consecutive repeat across wrap boundary
+                while std_pool[0] == last:
+                    random.shuffle(std_pool)
             seq += 1
+
+        # Oddball images
         for _ in range(STIM_PATTERN[1]):
             fname = odd_pool[odd_idx]
             stim_list.append({
@@ -209,6 +235,12 @@ def generate_stim_list(condition: str, stim_freq: float) -> list[dict]:
                 "full_path": os.path.join(odd_dir, fname),
             })
             odd_idx += 1
+            if odd_idx >= len(odd_pool):
+                odd_idx = 0
+                last = odd_pool[-1]
+                random.shuffle(odd_pool)
+                while odd_pool[0] == last:
+                    random.shuffle(odd_pool)
             seq += 1
 
     return stim_list
@@ -323,11 +355,11 @@ def main():
     win.mouseVisible = False
     win.flip()
 
-    # ── Generate stimulus list (random, no repetition) ────────
+    # ── Generate stimulus list (wrap-around, matched repetition) ─
     print(f"Condition: {condition}")
     stim_rows = generate_stim_list(condition, actual_freq)
     total_stims = len(stim_rows)
-    print(f"Stimulus sequence: {total_stims} images (no repetitions)")
+    print(f"Stimulus sequence: {total_stims} images")
 
     # Save stimulus order to output
     order_path = os.path.join(out_dir, f"{subject_id}_{condition}_stim_order.csv")
@@ -445,7 +477,8 @@ def main():
 
         # ── Prepare next stimulus ─────────────────────────────
         if stim_num >= total_stims:
-            print("ERROR: more stimuli needed than available (refresh rate unstable?)")
+            print("WARNING: frame loop ran longer than expected — "
+                  "ran out of pre-generated stimuli (refresh rate unstable?)")
             break
 
         row = stim_rows[stim_num]

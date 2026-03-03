@@ -60,6 +60,7 @@ TRIGGER_ODD = {
 #  PHOTODIODE
 # ──────────────────────────────────────────────────────────────
 SHOW_PHOTODIODE = True
+SHOW_ODDBALL_PHOTODIODE = False
 # Top-right corner (norm coords)
 PHOTODIODE_SIZE = [0.08, 0.08]         # norm units
 PHOTODIODE_ON_COLOR = [255, 255, 255]  # white

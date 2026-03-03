@@ -10,12 +10,12 @@ Features preserved from original SSVEP.py:
   - Sinusoidal opacity modulation
   - Fade in / fade out per block
   - Random size variation
-  - Diode stimulator (bottom-left, per original)
+  - Photodiode (top-right, flashes at peak opacity each cycle)
 
 Added / changed:
   - 2 conditions (easy / hard), selected via dialog
   - EEG parallel port triggers (condition-specific oddball codes)
-  - Photodiode flash on oddball onset (top-right corner)
+  - Oddball photodiode flash on oddball onset (top-right corner, hidden by default)
   - Image preloading to prevent frame drops
   - Wrap-around with reshuffle when image pool exhausted (no consecutive repeats)
   - Per-image onset logging to CSV
@@ -59,6 +59,7 @@ from config import (
     TRIGGER_STANDARD,
     TRIGGER_ODD,
     SHOW_PHOTODIODE,
+    SHOW_ODDBALL_PHOTODIODE,
     PHOTODIODE_SIZE,
     PHOTODIODE_ON_COLOR,
     PHOTODIODE_OFF_COLOR,
@@ -381,16 +382,17 @@ def main():
         win, name="image", units="deg", pos=[0, 0], size=STIM_SIZE,
         opacity=1, interpolate=True,
     )
-    # Diode stimulator — bottom-left (per original SSVEP.py)
-    diode_stimulator = visual.GratingStim(
-        win, name="diodeStim", units="norm", tex=None,
-        pos=[-1, -1], size=[0.1, 0.1],
+    # Photodiode — top-right, flashes at peak opacity each cycle
+    photodiode = visual.GratingStim(
+        win, name="photodiode", units="norm", tex=None,
+        pos=[1 - PHOTODIODE_SIZE[0] / 2, 1 - PHOTODIODE_SIZE[1] / 2],
+        size=PHOTODIODE_SIZE,
         color=PHOTODIODE_OFF_COLOR, colorSpace="rgb255",
         opacity=1, interpolate=True,
     )
-    # Photodiode — top-right (for EEG)
-    photodiode = visual.GratingStim(
-        win, name="photodiode", units="norm", tex=None,
+    # Oddball photodiode — top-right, flashes on oddball onset (hidden by default)
+    oddball_photodiode = visual.GratingStim(
+        win, name="oddballPhotodiode", units="norm", tex=None,
         pos=[1 - PHOTODIODE_SIZE[0] / 2, 1 - PHOTODIODE_SIZE[1] / 2],
         size=PHOTODIODE_SIZE,
         color=PHOTODIODE_OFF_COLOR, colorSpace="rgb255",
@@ -440,13 +442,13 @@ def main():
             core.quit()
 
     # ── Block start trigger ───────────────────────────────────
-    diode_stimulator.setAutoDraw(SHOW_PHOTODIODE)
+    photodiode.setAutoDraw(SHOW_PHOTODIODE)
     send_trigger(port, TRIGGER_BLOCK_START)
     trial_clock.reset()
     global_clock.reset()
     frame_count = 0
     stim_num = 0
-    photodiode_frames_left = 0
+    oddball_photodiode_frames_left = 0
     stim_peak_opacity = 0.0
 
     # ══════════════════════════════════════════════════════════
@@ -455,17 +457,18 @@ def main():
     while trial_clock.getTime() < BLOCK_DURATION_S:
 
         # ── OFF frames (blank, no image) ──────────────────────
-        diode_shown = False
-        diode_stimulator.color = PHOTODIODE_OFF_COLOR
+        photodiode_shown = False
+        photodiode.color = PHOTODIODE_OFF_COLOR
 
         for fn in range(FRAME_OFF):
-            # Photodiode management
-            if photodiode_frames_left > 0:
-                photodiode.color = PHOTODIODE_ON_COLOR
-                photodiode_frames_left -= 1
+            # Oddball photodiode management
+            if oddball_photodiode_frames_left > 0:
+                oddball_photodiode.color = PHOTODIODE_ON_COLOR
+                oddball_photodiode_frames_left -= 1
             else:
-                photodiode.color = PHOTODIODE_OFF_COLOR
-            photodiode.draw()
+                oddball_photodiode.color = PHOTODIODE_OFF_COLOR
+            if SHOW_ODDBALL_PHOTODIODE:
+                oddball_photodiode.draw()
 
             win.flip()
             reset_trigger(port)
@@ -520,19 +523,19 @@ def main():
             if SINUSOIDAL_STIM:
                 image_stim.opacity = stim_peak_opacity * sin_vals[fn]
 
-            # Diode stimulator (bottom-left) — flash at peak opacity
+            # Photodiode (top-right) — flash at peak opacity
             if SHOW_PHOTODIODE:
-                if not diode_shown and image_stim.opacity == stim_peak_opacity:
-                    diode_stimulator.color = PHOTODIODE_ON_COLOR
-                    diode_shown = True
+                if not photodiode_shown and image_stim.opacity == stim_peak_opacity:
+                    photodiode.color = PHOTODIODE_ON_COLOR
+                    photodiode_shown = True
                 else:
-                    diode_stimulator.color = PHOTODIODE_OFF_COLOR
+                    photodiode.color = PHOTODIODE_OFF_COLOR
 
-            # First ON frame = onset → trigger + photodiode + log
+            # First ON frame = onset → trigger + oddball photodiode + log
             if fn == 0:
                 send_trigger(port, trigger_code)
                 if is_oddball:
-                    photodiode_frames_left = PHOTODIODE_ON_FRAMES
+                    oddball_photodiode_frames_left = PHOTODIODE_ON_FRAMES
                 onset_time = global_clock.getTime()
                 onset_log.append({
                     "participant_id": subject_id,
@@ -546,13 +549,14 @@ def main():
                     "onset_frame": frame_count,
                 })
 
-            # Photodiode management
-            if photodiode_frames_left > 0:
-                photodiode.color = PHOTODIODE_ON_COLOR
-                photodiode_frames_left -= 1
+            # Oddball photodiode management
+            if oddball_photodiode_frames_left > 0:
+                oddball_photodiode.color = PHOTODIODE_ON_COLOR
+                oddball_photodiode_frames_left -= 1
             else:
-                photodiode.color = PHOTODIODE_OFF_COLOR
-            photodiode.draw()
+                oddball_photodiode.color = PHOTODIODE_OFF_COLOR
+            if SHOW_ODDBALL_PHOTODIODE:
+                oddball_photodiode.draw()
 
             image_stim.draw()
             win.flip()
@@ -570,7 +574,7 @@ def main():
     send_trigger(port, TRIGGER_BLOCK_END)
     core.wait(0.01)
     reset_trigger(port)
-    diode_stimulator.setAutoDraw(False)
+    photodiode.setAutoDraw(False)
 
     print(f"Block done — last frame: {frame_count}, stimuli shown: {stim_num}")
 

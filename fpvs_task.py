@@ -26,6 +26,8 @@ Added / changed:
 """
 
 from psychopy import visual, core, event, gui, parallel
+from PIL import Image
+import numpy as np
 import os
 import sys
 import csv
@@ -42,6 +44,7 @@ from config import (
     BLOCK_DURATION_S,
     WAIT_DURATION_S,
     SCREEN_SIZE,
+    SCREEN_NUMBER,
     BG_COLOR,
     STIM_SIZE,
     SINUSOIDAL_STIM,
@@ -247,13 +250,27 @@ def generate_stim_list(condition: str, stim_freq: float) -> list[dict]:
     return stim_list
 
 
+MAX_TEX_SIZE = 512  # px — max texture dimension for GPU upload
+
+
 def preload_images(win, image_paths):
-    """Return dict {path: ImageStim} with all images preloaded."""
+    """Return dict {path: ImageStim} with all images preloaded.
+
+    Images are downscaled to MAX_TEX_SIZE before uploading to the GPU
+    to avoid blowing VRAM on oversized source images.
+    """
     cache = {}
     for p in image_paths:
         if p not in cache:
+            img = Image.open(p)
+            # Downscale if larger than MAX_TEX_SIZE (preserve aspect ratio)
+            if max(img.size) > MAX_TEX_SIZE:
+                img.thumbnail((MAX_TEX_SIZE, MAX_TEX_SIZE), Image.LANCZOS)
+            # Convert to RGBA numpy array for PsychoPy
+            img_array = np.array(img.convert("RGBA"))
             cache[p] = visual.ImageStim(
-                win, image=p, units="deg", size=STIM_SIZE, interpolate=True,
+                win, image=img_array, units="deg", size=STIM_SIZE,
+                interpolate=True,
             )
     return cache
 
@@ -322,6 +339,7 @@ def main():
     win = visual.Window(
         size=SCREEN_SIZE, color=BG_COLOR, colorSpace="rgb255",
         fullscr=False, monitor="testMonitor", units="deg",
+        screen=SCREEN_NUMBER,
     )
 
     # ── Refresh rate validation ───────────────────────────────
@@ -378,10 +396,9 @@ def main():
     img_cache = preload_images(win, unique_paths)
 
     # ── Visual stimuli ────────────────────────────────────────
-    image_stim = visual.ImageStim(
-        win, name="image", units="deg", pos=[0, 0], size=STIM_SIZE,
-        opacity=1, interpolate=True,
-    )
+    # No separate image_stim — we draw directly from img_cache entries
+    # to avoid uploading a new GPU texture every cycle (VRAM leak).
+
     # Photodiode — top-right, flashes at peak opacity each cycle
     photodiode = visual.GratingStim(
         win, name="photodiode", units="norm", tex=None,
@@ -489,8 +506,8 @@ def main():
         stim_type = row["type"]
         is_oddball = stim_type == "odd"
 
-        # Use preloaded image
-        image_stim.image = img_cache[stim_path].image
+        # Use preloaded image directly (no texture re-upload)
+        image_stim = img_cache[stim_path]
         if RANDOMLY_VARY_SIZE:
             s = rand_sizes[stim_num]
             image_stim.size = [STIM_SIZE[0] * s, STIM_SIZE[1] * s]

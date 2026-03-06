@@ -31,6 +31,7 @@ WAIT_DURATION_S = 2.0     # wait before block starts
 #  VISUAL PARAMETERS
 # ──────────────────────────────────────────────────────────────
 SCREEN_SIZE = [1920, 1080]
+SCREEN_NUMBER = 1                    # 0 = primary, 1 = second monitor
 BG_COLOR = [138, 138, 138]        # rgb255
 STIM_SIZE = [6.53, 6.53]          # degrees of visual angle
 SINUSOIDAL_STIM = True
@@ -46,7 +47,7 @@ SIZE_PERCENT_STEPS = 2
 #  EEG TRIGGERS (parallel port)
 # ──────────────────────────────────────────────────────────────
 USE_TRIGGERS = True
-PARALLEL_PORT_ADDRESS = 0x2FB8
+PARALLEL_PORT_ADDRESS = 0xEFE8
 
 TRIGGER_BLOCK_START = 100
 TRIGGER_BLOCK_END = 101

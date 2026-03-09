@@ -34,12 +34,12 @@ SCREEN_SIZE = [1920, 1080]
 SCREEN_NUMBER = 1                    # 0 = primary, 1 = second monitor
 BG_COLOR = [138, 138, 138]        # rgb255
 STIM_SIZE = [6.53, 6.53]          # degrees of visual angle
-SINUSOIDAL_STIM = True
+SINUSOIDAL_STIM = False
 FADE_IN = True
 FADE_IN_CYCLES = 2.0
 FADE_OUT = True
 FADE_OUT_CYCLES = 2.0
-RANDOMLY_VARY_SIZE = True
+RANDOMLY_VARY_SIZE = False
 SIZE_PERCENT_RANGE = [74, 120]
 SIZE_PERCENT_STEPS = 2
 

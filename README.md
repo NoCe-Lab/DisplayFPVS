@@ -33,7 +33,7 @@ FPVS/
 
 ## Setup
 
-1. Install Python 3 and PsychoPy (`pip install psychopy`).
+1. Install Python 3.11 and PsychoPy 2025.2.4 (`pip install psychopy==2025.2.4`).
 2. Place stimulus images in the appropriate `stimuli/<condition>/<standard|odd>/` folders. You need enough unique images to fill 60 s without repetition (~288 standard + ~72 oddball at 6 Hz).
 3. Configure experiment parameters in `config.py` (screen resolution, parallel port address, etc.).
 

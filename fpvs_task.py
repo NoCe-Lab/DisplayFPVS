@@ -266,13 +266,9 @@ def preload_images(win, image_paths):
             # Downscale if larger than MAX_TEX_SIZE (preserve aspect ratio)
             if max(img.size) > MAX_TEX_SIZE:
                 img.thumbnail((MAX_TEX_SIZE, MAX_TEX_SIZE), Image.LANCZOS)
-            # Convert to RGB numpy array normalised to [-1, 1] for PsychoPy
-            # flipud: PIL origin is top-left, OpenGL/PsychoPy expects bottom-left
-            img_array = np.flipud(
-                np.array(img.convert("RGB"), dtype=np.float64) / 127.5 - 1.0
-            )
+            # Pass the PIL image directly; PsychoPy handles conversion
             cache[p] = visual.ImageStim(
-                win, image=img_array, units="deg", size=STIM_SIZE,
+                win, image=img, units="deg", size=STIM_SIZE,
                 interpolate=True,
             )
     return cache

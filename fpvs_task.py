@@ -266,8 +266,8 @@ def preload_images(win, image_paths):
             # Downscale if larger than MAX_TEX_SIZE (preserve aspect ratio)
             if max(img.size) > MAX_TEX_SIZE:
                 img.thumbnail((MAX_TEX_SIZE, MAX_TEX_SIZE), Image.LANCZOS)
-            # Convert to RGBA numpy array for PsychoPy
-            img_array = np.array(img.convert("RGBA"))
+            # Convert to RGBA numpy array normalised to [-1, 1] for PsychoPy
+            img_array = np.array(img.convert("RGBA"), dtype=np.float64) / 127.5 - 1.0
             cache[p] = visual.ImageStim(
                 win, image=img_array, units="deg", size=STIM_SIZE,
                 interpolate=True,
@@ -447,7 +447,7 @@ def main():
         win,
         "Bienvenue !\n\n"
         "Regardez le centre de l'écran.\n\n"
-        "Appuyez sur ESPACE pour commencer.",
+        "L'opérateur lancera l'expérience.",
     )
 
     # ── Pre-block wait ────────────────────────────────────────
@@ -635,8 +635,7 @@ def main():
     show_text_and_wait(
         win,
         "L'expérience est terminée.\n\n"
-        "Merci pour votre participation !\n\n"
-        "Appuyez sur ESPACE pour quitter.",
+        "Merci pour votre participation !",
     )
 
     win.close()

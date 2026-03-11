@@ -44,6 +44,13 @@ SIZE_PERCENT_RANGE = [74, 120]
 SIZE_PERCENT_STEPS = 2
 
 # ──────────────────────────────────────────────────────────────
+#  FIXATION CROSS
+# ──────────────────────────────────────────────────────────────
+FIXATION_SIZE = 0.5               # degrees of visual angle (arm length)
+FIXATION_COLOR = [255, 255, 255]  # rgb255 — white
+FIXATION_LINE_WIDTH = 3           # pixels
+
+# ──────────────────────────────────────────────────────────────
 #  EEG TRIGGERS (parallel port)
 # ──────────────────────────────────────────────────────────────
 USE_TRIGGERS = True

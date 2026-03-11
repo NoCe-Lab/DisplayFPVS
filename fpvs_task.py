@@ -20,7 +20,7 @@ Added / changed:
   - Wrap-around with reshuffle when image pool exhausted (no consecutive repeats)
   - Per-image onset logging to CSV
   - Stimulus order saved to output
-  - No fixation cross, no fixation task
+  - Fixation cross displayed during pre-block wait and block
   - Mouse cursor hidden (fullscreen)
   - French instructions
 """
@@ -68,6 +68,9 @@ from config import (
     PHOTODIODE_OFF_COLOR,
     PHOTODIODE_ON_FRAMES,
     OUTPUT_DIR,
+    FIXATION_SIZE,
+    FIXATION_COLOR,
+    FIXATION_LINE_WIDTH,
 )
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".gif"}
@@ -415,6 +418,16 @@ def main():
         opacity=1, interpolate=True,
     )
 
+    # Fixation cross — visible during pre-block wait and block
+    fixation = visual.ShapeStim(
+        win, name="fixation", units="deg",
+        vertices=[(0, -FIXATION_SIZE), (0, FIXATION_SIZE), (0, 0),
+                  (-FIXATION_SIZE, 0), (FIXATION_SIZE, 0)],
+        lineWidth=FIXATION_LINE_WIDTH,
+        closeShape=False,
+        lineColor=FIXATION_COLOR, colorSpace="rgb255",
+    )
+
     # ── Parallel port ─────────────────────────────────────────
     port = init_parallel_port()
 
@@ -449,10 +462,11 @@ def main():
         "L'opérateur lancera l'expérience.",
     )
 
-    # ── Pre-block wait ────────────────────────────────────────
-    win.flip()  # blank screen
+    # ── Pre-block wait (fixation cross) ─────────────────────
     wait_clock.reset()
     while wait_clock.getTime() < WAIT_DURATION_S:
+        fixation.draw()
+        win.flip()
         if event.getKeys(keyList=["escape"]):
             win.close()
             core.quit()
@@ -486,6 +500,7 @@ def main():
             if SHOW_ODDBALL_PHOTODIODE:
                 oddball_photodiode.draw()
 
+            fixation.draw()
             win.flip()
             reset_trigger(port)
 
@@ -575,6 +590,7 @@ def main():
                 oddball_photodiode.draw()
 
             image_stim.draw()
+            fixation.draw()
             win.flip()
 
             # Reset trigger on the frame after it was set

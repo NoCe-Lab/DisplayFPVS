@@ -33,7 +33,7 @@ WAIT_DURATION_S = 2.0     # wait before block starts
 SCREEN_SIZE = [1920, 1080]
 SCREEN_NUMBER = 1                    # 0 = primary, 1 = second monitor
 BG_COLOR = [138, 138, 138]        # rgb255
-STIM_SIZE = [6.53, 6.53]          # degrees of visual angle
+STIM_SIZE = [15, 15]          # degrees of visual angle
 SINUSOIDAL_STIM = False
 FADE_IN = False
 FADE_IN_CYCLES = 2.0

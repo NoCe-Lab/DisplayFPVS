@@ -500,7 +500,6 @@ def main():
             if SHOW_ODDBALL_PHOTODIODE:
                 oddball_photodiode.draw()
 
-            fixation.draw()
             win.flip()
             reset_trigger(port)
 
@@ -590,7 +589,6 @@ def main():
                 oddball_photodiode.draw()
 
             image_stim.draw()
-            fixation.draw()
             win.flip()
 
             # Reset trigger on the frame after it was set

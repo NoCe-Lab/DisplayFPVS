@@ -1,17 +1,19 @@
 # Semantic FPVS EEG Task
 
-Adapted from [DisplayFPVS](https://github.com/JosephArizpe/DisplayFPVS) (Joseph M. Arizpe, 2017) for a **Semantic FPVS** EEG paradigm with 2 conditions.
+Adapted from [DisplayFPVS](https://github.com/JosephArizpe/DisplayFPVS) (Joseph M. Arizpe, 2017) for a **Semantic FPVS** EEG paradigm with 4 conditions.
 
 ## Overview
 
 Images are presented at 6 Hz (one every ~167 ms) in cycles of 4 standard + 1 oddball (oddball rate = 1.2 Hz). Two conditions vary the semantic distance between standard and oddball categories:
 
-| Condition | Standard | Oddball |
-|-----------|----------|---------|
-| easy | category A | category B (far) |
-| hard | category A | category B (close) |
+| Condition | Standard | Oddball | Images |
+|-----------|----------|---------|--------|
+| easy | category A | category B (far) | Original |
+| hard | category A | category B (close) | Original |
+| easy_scrambled | category A | category B (far) | Phase-scrambled |
+| hard_scrambled | category A | category B (close) | Phase-scrambled |
 
-The experimenter selects the condition and subject ID at startup. One block of 60 s is run per experiment. No image is repeated within a block.
+The scrambled conditions use phase-scrambled versions of the same images as control baselines. The experimenter selects the condition and subject ID at startup. One block of 60 s is run per experiment. No image is repeated within a block.
 
 Features: sinusoidal opacity modulation, fade in/out, random size jitter, EEG parallel port triggers (condition-specific oddball codes), photodiode flash (top-right) on oddball onset.
 
@@ -23,27 +25,47 @@ FPVS/
 ├── fpvs_task.py           # Main presentation script
 ├── SSVEP.py               # Original reference (Python 2, untouched)
 ├── stimuli/
-│   ├── easy/standard/     # Standard images for easy condition
-│   ├── easy/odd/          # Oddball images for easy condition
+│   ├── easy/standard/              # Standard images for easy condition
+│   ├── easy/odd/                   # Oddball images for easy condition
 │   ├── hard/standard/
-│   └── hard/odd/
+│   ├── hard/odd/
+│   ├── easy_scrambled/standard/    # Phase-scrambled easy standard
+│   ├── easy_scrambled/odd/         # Phase-scrambled easy oddball
+│   ├── hard_scrambled/standard/
+│   └── hard_scrambled/odd/
 └── output/                # Per-subject output (gitignored)
     └── <subject_id>/
 ```
 
+## Installation
+
+Requires **Python 3.11**.
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+> **Note:** wxPython is a PsychoPy dependency but is not needed for this script-based experiment. If `pip install` fails building wxPython, install without it:
+> ```bash
+> pip install --no-deps psychopy==2025.2.4
+> pip install -r requirements.txt --ignore-installed psychopy
+> ```
+
 ## Setup
 
-1. Install Python 3.11 and PsychoPy 2025.2.4 (`pip install psychopy==2025.2.4`).
-2. Place stimulus images in the appropriate `stimuli/<condition>/<standard|odd>/` folders. You need enough unique images to fill 60 s without repetition (~288 standard + ~72 oddball at 6 Hz).
-3. Configure experiment parameters in `config.py` (screen resolution, parallel port address, etc.).
+1. Place stimulus images in the appropriate `stimuli/<condition>/<standard|odd>/` folders. You need enough unique images to fill 60 s without repetition (~288 standard + ~72 oddball at 6 Hz).
+2. Configure experiment parameters in `config.py` (screen resolution, parallel port address, etc.).
 
 ## Running
 
 ```bash
+source .venv/bin/activate
 python fpvs_task.py
 ```
 
-The dialog will ask for Subject ID and Condition (easy / hard).
+The dialog will ask for Subject ID and Condition (easy / hard / easy_scrambled / hard_scrambled).
 
 ## Output
 
@@ -62,6 +84,8 @@ All output is saved to `output/<subject_id>/`:
 | Standard onset | 10 |
 | Oddball easy | 21 |
 | Oddball hard | 22 |
+| Oddball easy_scrambled | 23 |
+| Oddball hard_scrambled | 24 |
 
 ## Credits
 

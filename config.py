@@ -6,7 +6,7 @@
 # ──────────────────────────────────────────────────────────────
 #  CONDITIONS & STIMULUS STRUCTURE
 # ──────────────────────────────────────────────────────────────
-CONDITIONS = ["easy", "hard"]
+CONDITIONS = ["easy", "hard", "easy_scrambled", "hard_scrambled"]
 
 # [n standard, n oddball] per cycle  →  4 standard + 1 oddball = 5 images/cycle
 STIM_PATTERN = [4, 1]
@@ -62,6 +62,8 @@ TRIGGER_STANDARD = 10
 TRIGGER_ODD = {
     "easy": 21,
     "hard": 22,
+    "easy_scrambled": 23,
+    "hard_scrambled": 24,
 }
 
 # ──────────────────────────────────────────────────────────────

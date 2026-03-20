@@ -77,8 +77,38 @@ pip install -r requirements.txt
 
 ## Setup
 
-1. Place stimulus images in the appropriate `stimuli/<condition>/<standard|odd>/` folders. You need enough unique images to fill 60 s without repetition (~288 standard + ~72 oddball at 6 Hz).
-2. Configure experiment parameters in `config.py` (screen resolution, parallel port address, etc.).
+### Adding stimulus images
+
+Images must be placed under `stimuli/` following this structure:
+
+```
+stimuli/
+├── easy/
+│   ├── standard/    ← standard category images (e.g. tools)
+│   └── odd/         ← oddball category images (e.g. animals)
+├── hard/
+│   ├── standard/    ← standard category images
+│   └── odd/         ← oddball category images (semantically close to standard)
+├── easy_scrambled/
+│   ├── standard/    ← phase-scrambled versions of easy/standard/
+│   └── odd/         ← phase-scrambled versions of easy/odd/
+└── hard_scrambled/
+    ├── standard/    ← phase-scrambled versions of hard/standard/
+    └── odd/         ← phase-scrambled versions of hard/odd/
+```
+
+Each condition folder must contain enough **unique** images to cover a full 60 s block without repetition. At 6 Hz with a 4-standard + 1-oddball cycle:
+
+- **standard/**: at least 288 images (4 per cycle × 72 cycles/min)
+- **odd/**: at least 72 images (1 per cycle × 72 cycles/min)
+
+Accepted formats: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tif`, `.tiff`, `.gif`.
+
+> The scrambled conditions are control baselines — use phase-scrambled versions of the exact same images as the corresponding non-scrambled condition.
+
+### Configuration
+
+Configure experiment parameters in `config.py` (screen resolution, parallel port address, etc.).
 
 ## Running
 

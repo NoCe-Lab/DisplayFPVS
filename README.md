@@ -23,7 +23,6 @@ Features: sinusoidal opacity modulation, fade in/out, random size jitter, EEG pa
 FPVS/
 ├── config.py              # All configurable parameters
 ├── fpvs_task.py           # Main presentation script
-├── SSVEP.py               # Original reference (Python 2, untouched)
 ├── stimuli/
 │   ├── easy/standard/              # Standard images for easy condition
 │   ├── easy/odd/                   # Oddball images for easy condition
@@ -41,6 +40,23 @@ FPVS/
 
 Requires **Python 3.11**.
 
+### Windows
+
+1. Open a terminal: press `Win + R`, type `cmd`, press Enter.
+2. Install Python 3.11 from [python.org](https://www.python.org/downloads/) — check **"Add Python to PATH"** during setup.
+3. Navigate to the project folder (replace the path with yours):
+   ```cmd
+   cd C:\Users\YourName\Desktop\DeployFPVS
+   ```
+4. Create and activate a virtual environment, then install dependencies:
+   ```cmd
+   py -3.11 -m venv .venv
+   .venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+### macOS / Linux
+
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
@@ -49,6 +65,12 @@ pip install -r requirements.txt
 
 > **Note:** wxPython is a PsychoPy dependency but is not needed for this script-based experiment. If `pip install` fails building wxPython, install without it:
 > ```bash
+> # macOS/Linux
+> pip install --no-deps psychopy==2025.2.4
+> pip install -r requirements.txt --ignore-installed psychopy
+> ```
+> ```cmd
+> :: Windows
 > pip install --no-deps psychopy==2025.2.4
 > pip install -r requirements.txt --ignore-installed psychopy
 > ```
@@ -60,6 +82,13 @@ pip install -r requirements.txt
 
 ## Running
 
+**Windows:**
+```cmd
+.venv\Scripts\activate
+python fpvs_task.py
+```
+
+**macOS / Linux:**
 ```bash
 source .venv/bin/activate
 python fpvs_task.py
